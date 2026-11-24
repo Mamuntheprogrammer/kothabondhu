@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#08090d" />
+  <title>কথাবন্ধু · Kotha Bondhu — offline Bangla &amp; English voices</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ffcf7a'/%3E%3Cstop offset='.55' stop-color='%23ff8a5c'/%3E%3Cstop offset='1' stop-color='%23ff5c8a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%230b0c12'/%3E%3Cg stroke='url(%23g)' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M16 28v8M24 20v24M32 14v36M40 22v20M48 27v10'/%3E%3C/g%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script>
+    // Set the theme before first paint to avoid a flash.
+    try {
+      var saved = localStorage.getItem("kotha-bondhu.theme");
+      var theme = saved || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      document.documentElement.dataset.theme = theme;
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true">
+    <defs>
+      <linearGradient id="brand-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ffcf7a" />
+        <stop offset="0.55" stop-color="#ff8a5c" />
+        <stop offset="1" stop-color="#ff5c8a" />
+      </linearGradient>
+    </defs>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.4v13.2c0 .8.9 1.3 1.6.9l10.2-6.6a1 1 0 0 0 0-1.8L9.6 4.5A1 1 0 0 0 8 5.4Z" fill="currentColor"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="4.5" width="4" height="15" rx="1.4" fill="currentColor"/><rect x="13.5" y="4.5" width="4" height="15" rx="1.4" fill="currentColor"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.4" fill="currentColor"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3.5v11.2m0 0 4.2-4.2M12 14.7 7.8 10.5M4.5 20.5h15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L20 6.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6.5 9.5 5.5 5.5 5.5-5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.8v2.1M12 19.1v2.1M4.2 4.2l1.5 1.5M18.3 18.3l1.5 1.5M2.8 12h2.1M19.1 12h2.1M4.2 19.8l1.5-1.5M18.3 5.7l1.5-1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 13.2A8.6 8.6 0 1 1 10.8 3.5a7 7 0 0 0 9.7 9.7Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="15" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3.2l1.9 5.1 5.1 1.9-5.1 1.9L12 17.2l-1.9-5.1L5 10.2l5.1-1.9L12 3.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M18.6 15.4l.8 2.1 2.1.8-2.1.8-.8 2.1-.8-2.1-2.1-.8 2.1-.8.8-2.1Z" fill="currentColor" opacity=".7"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.2 7V4.4h5.6V7M6.6 7l.9 12.6h9l.9-12.6M10.2 10.8v5.4M13.8 10.8v5.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.2c0-1 .8-1.7 1.7-1.7h4l2 2h7.6c1 0 1.7.8 1.7 1.7v8.6c0 1-.8 1.7-1.7 1.7H5.2c-1 0-1.7-.8-1.7-1.7V7.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M4 9.5h3.2L12 5.6v12.8L7.2 14.5H4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M15.4 9.2a4 4 0 0 1 0 5.6M18.2 6.6a7.6 7.6 0 0 1 0 10.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-volume-x" viewBox="0 0 24 24"><path d="M4 9.5h3.2L12 5.6v12.8L7.2 14.5H4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m16 9.5 5 5m0-5-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.8v5.4M12 7.6v.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 7.4V12l3.2 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.6 12a7.6 7.6 0 1 1-2.2-5.4M19.8 4.6v4.2h-4.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.2 19 6v5.6c0 4.1-2.9 7.2-7 9.2-4.1-2-7-5.1-7-9.2V6l7-2.8Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m8.8 12 2.2 2.2 4.4-4.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3.8 12h16.4M12 3.6c2.2 2.3 3.3 5.1 3.3 8.4s-1.1 6.1-3.3 8.4c-2.2-2.3-3.3-5.1-3.3-8.4S9.8 5.9 12 3.6Z" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="i-speak" viewBox="0 0 24 24"><path d="M4 9.8v4.4M8 6.6v10.8M12 3.6v16.8M16 6.6v10.8M20 9.8v4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m0 0-5.4-5.4M19 12l-5.4 5.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <div class="aurora" aria-hidden="true">
+    <span class="aurora-a"></span>
+    <span class="aurora-b"></span>
+    <span class="aurora-c"></span>
+  </div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="shell">
+    <aside class="rail">
+      <a class="brand" href="/" aria-label="Kotha Bondhu home">
+        <span class="brand-mark">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <g stroke="url(#brand-grad)" stroke-width="5.5" stroke-linecap="round">
+              <path d="M16 28v8M24 20v24M32 14v36M40 22v20M48 27v10" />
+            </g>
+          </svg>
+        </span>
+        <span class="brand-word">কথাবন্ধু</span>
+      </a>
+
+      <nav class="rail-nav" aria-label="Primary">
+        <button class="rail-btn is-active" data-nav="studio" aria-label="Studio" title="Studio">
+          <svg class="icon"><use href="#i-speak"/></svg><span>Studio</span>
+        </button>
+        <button class="rail-btn" id="rail-models" aria-label="Models" title="Models">
+          <svg class="icon"><use href="#i-sliders"/></svg><span>Models</span>
+        </button>
+        <button class="rail-btn" id="rail-clone" aria-label="Voice cloning" title="Voice cloning">
+          <svg class="icon"><use href="#i-sparkle"/></svg><span>Clone</span>
+        </button>
+        <button class="rail-btn" id="rail-about" aria-label="About" title="About">
+          <svg class="icon"><use href="#i-info"/></svg><span>About</span>
+        </button>
+      </nav>
+
+      <div class="rail-foot">
+        <button class="rail-btn theme-btn" id="theme-btn" aria-label="Toggle theme" title="Toggle theme">
+          <svg class="icon icon-sun"><use href="#i-sun"/></svg>
+          <svg class="icon icon-moon"><use href="#i-moon"/></svg>
+          <span>Theme</span>
+        </button>
+        <span class="rail-version">v2.1</span>
+      </div>
+    </aside>
+
+    <main class="stage">
+      <header class="topbar">
+        <div class="title-block">
+          <p class="eyebrow"><span class="live-dot"></span> Offline voice studio</p>
+          <h1>Make it <span class="grad-text">sound human</span>.</h1>
+          <p class="sub">Bangla and English, in one breath — generated on this machine.</p>
+        </div>
+        <div class="top-actions">
+          <div class="status-pill is-loading" id="status-pill" title="Model status">
+            <span class="status-pill-dot"></span>
+            <span id="status-pill-text">Checking models</span>
+          </div>
+          <button class="icon-btn theme-inline" id="theme-btn-inline" aria-label="Toggle theme">
+            <svg class="icon icon-sun"><use href="#i-sun"/></svg>
+            <svg class="icon icon-moon"><use href="#i-moon"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <section class="panel editor-panel" aria-labelledby="editor-heading">
+          <h2 id="editor-heading" class="sr-only">Compose text</h2>
+
+          <div class="editor-top">
+            <div class="seg" role="group" aria-label="Language">
+              <button class="seg-btn is-active" data-lang="auto">Auto <span class="seg-hint">detect</span></button>
+              <button class="seg-btn" data-lang="bn"><span class="lang-dot bn"></span>বাংলা</button>
+              <button class="seg-btn" data-lang="en"><span class="lang-dot en"></span>English</button>
+            </div>
+            <div class="editor-tools">
+              <button class="text-btn" id="sample-btn"><svg class="icon"><use href="#i-sparkle"/></svg> Sample</button>
+              <button class="text-btn" id="clear-btn">Clear</button>
+            </div>
+          </div>
+
+          <div class="editor-wrap" id="drop-zone">
+            <textarea id="text" spellcheck="false" placeholder="Write or paste Bangla, English — or mix both.&#10;Try: আমি Python শিখছি, আর আজ ৩৬.৫°C।"></textarea>
+            <div class="drop-hint"><svg class="icon"><use href="#i-download"/></svg> Drop a .txt file to load it</div>
+          </div>
+
+          <div class="editor-meta">
+            <div class="meta-stats">
+              <span><strong id="stat-chars">0</strong> characters</span>
+              <span><strong id="stat-words">0</strong> words</span>
+              <span id="stat-est">~0:00 audio</span>
+            </div>
+            <div class="meta-keys"><kbd>Ctrl</kbd><kbd>↵</kbd><span>to speak</span></div>
+          </div>
+
+          <div class="controls">
+            <div class="field voice-field">
+              <span class="field-label">Voice</span>
+              <button class="select-trigger" id="voice-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose a voice">
+                <span class="voice-avatar" id="voice-avatar">AH</span>
+                <span class="voice-copy"><strong id="voice-name">Heart</strong><small id="voice-style">US female</small></span>
+                <svg class="icon chevron"><use href="#i-chevron"/></svg>
+              </button>
+              <div class="menu voice-menu" id="voice-menu" role="listbox" aria-label="Voices" hidden>
+                <div class="menu-search">
+                  <svg class="icon"><use href="#i-search"/></svg>
+                  <input id="voice-search" type="text" placeholder="Search voices…" autocomplete="off" />
+                </div>
+                <div class="menu-list" id="voice-list"></div>
+                <div class="voice-menu-foot">
+                  <button class="text-btn" id="voice-clone-manage"><svg class="icon"><use href="#i-sparkle"/></svg> Manage cloned voices</button>
+                </div>
+              </div>
+              <p class="field-note" id="voice-note">Bangla uses MMS by default. Male and female voices are in the menu.</p>
+            </div>
+
+            <div class="field speed-field">
+              <div class="field-row">
+                <label class="field-label" for="speed">Speed</label>
+                <output class="speed-value" id="speed-value">1.00×</output>
+              </div>
+              <input type="range" id="speed" min="0.5" max="2" step="0.05" value="1" aria-label="Speech speed" />
+              <div class="range-marks"><span>0.5×</span><span>1×</span><span>1.5×</span><span>2×</span></div>
+            </div>
+
+            <div class="field switch-field">
+              <label class="switch">
+                <input type="checkbox" id="loudness" checked />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+                <span class="switch-copy"><strong>Balance volume</strong><small>Match Bangla &amp; English</small></span>
+              </label>
+              <label class="switch">
+                <input type="checkbox" id="steady-bn" checked />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+                <span class="switch-copy"><strong>Steady Bangla tone</strong><small>Read longer blocks, less pitch drift</small></span>
+              </label>
+              <label class="switch">
+                <input type="checkbox" id="autoplay" checked />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+                <span class="switch-copy"><strong>Auto-play</strong><small>Start on first chunk</small></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="btn btn-primary" id="speak-btn">
+              <span class="btn-icon"><svg class="icon"><use href="#i-speak"/></svg></span>
+              <span class="btn-label">Speak</span>
+              <kbd class="btn-kbd">Ctrl ↵</kbd>
+              <span class="btn-shine" aria-hidden="true"></span>
+            </button>
+            <button class="btn btn-ghost" id="stop-btn" disabled>
+              <svg class="icon"><use href="#i-stop"/></svg> Stop
+            </button>
+            <button class="btn btn-ghost" id="export-btn" disabled>
+              <svg class="icon"><use href="#i-download"/></svg> Download
+            </button>
+            <span class="action-spacer"></span>
+            <button class="btn btn-quiet" id="models-btn-inline">
+              <svg class="icon"><use href="#i-sliders"/></svg> Models
+              <span class="count-badge" id="model-count">0/3</span>
+            </button>
+
+            <div class="menu export-menu" id="export-menu" hidden>
+              <p class="menu-title">Download audio</p>
+              <button data-format="wav"><span>WAV</span><small>Lossless · 24 kHz</small></button>
+              <button data-format="flac"><span>FLAC</span><small>Lossless · compressed</small></button>
+              <button data-format="mp3"><span>MP3</span><small>Small · shareable</small></button>
+              <button data-format="ogg"><span>OGG</span><small>Open format</small></button>
+            </div>
+          </div>
+
+          <div class="progress" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+          <div class="status-line">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text" aria-live="polite">Ready when you are.</span>
+            <span class="status-meta" id="status-meta"></span>
+          </div>
+        </section>
+
+        <aside class="side">
+          <section class="panel player-panel" aria-labelledby="player-heading">
+            <div class="panel-head">
+              <p class="eyebrow" id="player-heading">Now playing</p>
+              <span class="badge" id="player-badge">idle</span>
+            </div>
+
+            <div class="viz">
+              <canvas id="wave" aria-hidden="true"></canvas>
+            </div>
+
+            <p class="player-title" id="player-title">Your voice, ready when you are.</p>
+
+            <div class="time-row">
+              <span id="time-current">0:00</span>
+              <div class="seek" id="seek" role="slider" tabindex="0" aria-label="Playback position" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+                <div class="seek-track"></div>
+                <div class="seek-buffer" id="seek-buffer"></div>
+                <div class="seek-fill" id="seek-fill"></div>
+                <div class="seek-thumb" id="seek-thumb"></div>
+              </div>
+              <span id="time-total">0:00</span>
+            </div>
+
+            <div class="player-controls">
+              <button class="round-btn" id="mute-btn" aria-label="Mute">
+                <svg class="icon icon-volume"><use href="#i-volume"/></svg>
+                <svg class="icon icon-muted"><use href="#i-volume-x"/></svg>
+              </button>
+              <button class="round-btn primary" id="play-btn" aria-label="Play">
+                <svg class="icon icon-play"><use href="#i-play"/></svg>
+                <svg class="icon icon-pause"><use href="#i-pause"/></svg>
+              </button>
+              <button class="round-btn" id="stop-btn-2" aria-label="Stop">
+                <svg class="icon"><use href="#i-stop"/></svg>
+              </button>
+              <button class="round-btn" id="export-btn-2" aria-label="Download WAV">
+                <svg class="icon"><use href="#i-download"/></svg>
+              </button>
+            </div>
+
+            <div class="parts" id="parts">
+              <span class="parts-empty">Segments appear here as they are generated.</span>
+            </div>
+          </section>
+
+          <section class="panel mini-panel">
+            <div class="panel-head">
+              <p class="eyebrow">Models</p>
+              <button class="text-btn" id="manage-models">Manage</button>
+            </div>
+            <div class="mini-list" id="mini-model-list">
+              <div class="mini-row skeleton-row"></div>
+              <div class="mini-row skeleton-row"></div>
+            </div>
+          </section>
+
+          <section class="panel recent-panel">
+            <div class="panel-head">
+              <p class="eyebrow">Recent</p>
+              <button class="text-btn" id="clear-history">Clear</button>
+            </div>
+            <ul class="history-list" id="history-list">
+              <li class="history-empty">Your last generations will show up here.</li>
+            </ul>
+          </section>
+
+          <p class="offline-note"><svg class="icon"><use href="#i-shield"/></svg> Runs entirely on this machine. No cloud, no keys.</p>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <header class="modal-head">
+        <div>
+          <p class="eyebrow">Kotha Bondhu · কথাবন্ধু</p>
+          <h2 id="modal-title">Models</h2>
+        </div>
+        <button class="icon-btn" data-close aria-label="Close"><svg class="icon"><use href="#i-x"/></svg></button>
+      </header>
+
+      <div class="tabs" role="tablist">
+        <button class="tab is-active" data-tab="models" role="tab">Models</button>
+        <button class="tab" data-tab="clone" role="tab">Clone</button>
+        <button class="tab" data-tab="about" role="tab">About</button>
+      </div>
+
+      <div class="tab-panel" id="tab-models">
+        <p class="modal-lead">Downloaded once, then fully offline. English runs on Kokoro-82M; Bangla can use MMS-TTS or the bundled male/female Indic Tiny voices.</p>
+        <div class="model-cards" id="modal-model-list"></div>
+        <div class="cache-row">
+          <div class="cache-copy">
+            <span class="field-label">Model cache</span>
+            <code id="cache-path">…</code>
+          </div>
+          <button class="btn btn-quiet" id="open-cache"><svg class="icon"><use href="#i-folder"/></svg> Open folder</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-clone" hidden>
+        <p class="modal-lead">Optional voice cloning with IndicF5. Nothing here is downloaded or installed unless you start it — the normal offline Bangla and English voices stay untouched.</p>
+        <div class="clone-warning" id="clone-warning"></div>
+        <div class="clone-chips" id="clone-chips"></div>
+
+        <section class="clone-step">
+          <header class="clone-step-head"><span class="step-num">1</span><div><h3>Hugging Face token</h3><p>The official IndicF5 repository is gated. A token is needed for the one-time model download.</p></div></header>
+          <div class="clone-row">
+            <input type="password" id="clone-token" placeholder="hf_…" autocomplete="off" spellcheck="false" aria-label="Hugging Face token" />
+            <button class="btn btn-quiet" id="clone-token-save">Save token</button>
+          </div>
+          <p class="field-note">Stored in server memory only — never written to disk or shown again.</p>
+        </section>
+
+        <section class="clone-step">
+          <header class="clone-step-head"><span class="step-num">2</span><div><h3>Install the runtime</h3><p>An isolated virtual environment keeps PyTorch away from the main studio.</p></div></header>
+          <div class="clone-row">
+            <select id="clone-profile" aria-label="Install profile">
+              <option value="cpu">CPU</option>
+              <option value="cuda">CUDA / GPU</option>
+            </select>
+            <button class="btn btn-ghost" id="clone-setup">Install environment</button>
+          </div>
+          <p class="field-note">About 2–3 GB of packages. The GPU profile uses PyTorch CUDA 12.1 wheels.</p>
+        </section>
+
+        <section class="clone-step">
+          <header class="clone-step-head"><span class="step-num">3</span><div><h3>Download IndicF5</h3><p>DiT weights, vocabulary and the Vocos vocoder — roughly 1.45 GB, resumed on retry.</p></div></header>
+          <div class="clone-row">
+            <button class="btn btn-ghost" id="clone-download">Download model</button>
+            <span class="clone-copy" id="clone-model-copy">Checking local files…</span>
+          </div>
+        </section>
+
+        <div class="clone-progress" id="clone-progress" hidden>
+          <div class="clone-bar"><div id="clone-progress-fill"></div></div>
+          <span id="clone-progress-label">Starting…</span>
+        </div>
+        <pre class="clone-log" id="clone-log" hidden aria-live="polite"></pre>
+
+        <section class="clone-step">
+          <header class="clone-step-head"><span class="step-num">4</span><div><h3>Add a reference voice</h3><p>A clear 3–60 second clip and its exact transcript. Keep it short and noise-free.</p></div></header>
+          <label class="clone-label">Voice name<input type="text" id="clone-voice-name" maxlength="60" placeholder="e.g.voice" autocomplete="off" /></label>
+          <label class="clone-label">What the clip says<textarea id="clone-voice-text" rows="3" maxlength="600" placeholder="Type the words spoken in the reference, exactly."></textarea></label>
+          <div class="clone-row">
+            <label class="file-btn"><input type="file" id="clone-voice-file" accept="audio/*" hidden /><svg class="icon"><use href="#i-folder"/></svg> Choose audio</label>
+            <button class="btn btn-quiet" id="clone-mic"><svg class="icon"><use href="#i-volume"/></svg> Record microphone</button>
+            <span class="clone-copy" id="clone-file-name">No clip chosen</span>
+          </div>
+          <label class="clone-check"><input type="checkbox" id="clone-consent" /> I have permission to use this voice.</label>
+          <p class="field-note">Bengali-tuned: cloned voices also read English, but with a Bengali accent. Speed changes may shift pitch.</p>
+          <button class="btn btn-primary clone-add" id="clone-add"><svg class="icon"><use href="#i-sparkle"/></svg> Add cloned voice</button>
+        </section>
+
+        <section class="clone-step">
+          <header class="clone-step-head"><span class="step-num">5</span><div><h3>Saved voices</h3><p>Choose one from the voice menu to use it for every segment.</p></div></header>
+          <div class="clone-voice-list" id="clone-voice-list"></div>
+        </section>
+      </div>
+
+      <div class="tab-panel" id="tab-about" hidden>
+        <div class="about-grid">
+          <div>
+            <h3>Three engines, one studio</h3>
+            <p>Kokoro-82M speaks English with 30 voices. MMS-TTS is the default Bangla speaker; Indic Tiny adds a fixed male and female Bangla voice. Mixed text is split by script, synthesized in order, loudness-matched, and stitched into one stream.</p>
+            <h3>Streaming by design</h3>
+            <p>Audio starts as soon as the first sentence is ready. Synthesis runs on a worker thread; the interface only ever consumes events, so it never freezes.</p>
+            <h3>Private by default</h3>
+            <p>Nothing leaves your computer. Models download once into the cache and every later run works with the network off.</p>
+          </div>
+          <div>
+            <h3>Shortcuts</h3>
+            <ul class="shortcut-list">
+              <li><kbd>Ctrl</kbd><kbd>↵</kbd><span>Speak</span></li>
+              <li><kbd>Esc</kbd><span>Stop / close</span></li>
+              <li><kbd>/</kbd><span>Focus editor</span></li>
+              <li><kbd>Space</kbd><span>Play / pause</span></li>
+            </ul>
+            <h3>Credits</h3>
+            <p class="fine">Built on the original offline TTS core. Kokoro-82M (Apache 2.0) · MMS-TTS Bengali (CC-BY-NC 4.0, non-commercial) · Indic Tiny TTS Bengali (CC-BY-4.0; Vocos vocoder MIT).</p>
+            <p class="fine" id="about-version">Kotha Bondhu 2.2 · কথাবন্ধু</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

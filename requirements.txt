@@ -1,0 +1,15 @@
+# Kotha Bondhu runtime
+#
+# The studio is a new application layer on top of the original TTS package
+# (`../awaaz`), which provides the engines, text pipeline and model cache.
+# Installing the parent package is enough:
+#
+#     pip install -e ..
+#
+# If the engines are already installed, these are the only runtime pieces the
+# studio itself needs:
+numpy>=1.24
+onnxruntime>=1.17
+kokoro-onnx>=0.4.5
+soundfile>=0.12
+platformdirs>=3.0
