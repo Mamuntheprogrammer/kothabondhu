@@ -2,9 +2,8 @@
 
 The default Bangla path stays MMS (one speaker). This module adds an optional
 male/female pair from ``sulabhkatiyar/indic-tiny-tts-bengali`` as fixed voices.
-It is deliberately separate from :mod:`awaaz.engines`: the core package is
-left untouched, and the model is only imported when one of these voices is
-actually selected.
+It is deliberately separate from :mod:`core.engines`: the built-in engines stay
+untouched, and the model is only imported when one of these voices is selected.
 
 Runtime: ONNX Runtime + NumPy (already used by the studio). Output is 24 kHz
 mono float32, so no resampling is needed. ``seed=0`` is passed to the model so
@@ -26,8 +25,8 @@ import urllib.request
 from pathlib import Path
 from typing import Iterator
 
-from awaaz.config import cache_dir
-from awaaz.engines import EngineError, ModelNotAvailable
+from core.config import cache_dir
+from core.engines import EngineError, ModelNotAvailable
 
 MODEL_KEY = "indic-tiny-bn"
 MODEL_TITLE = "Bangla voices"

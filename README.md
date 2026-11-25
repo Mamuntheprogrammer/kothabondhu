@@ -19,9 +19,8 @@ python ai_version/run.py
 Then open <http://127.0.0.1:8765> (the browser opens automatically). Use
 `--port`, `--host`, `--no-browser`, `--models PATH` or `--debug` if needed.
 
-> Requires the parent `awaaz` package. From the repository root:
-> `pip install -e .` (or `pip install -e ..` from this folder). The import name
-> stays `awaaz` for compatibility; the product is Kotha Bondhu (কথাবন্ধু).
+> Self-contained: no separate TTS package is needed. Create a virtual
+> environment and run `pip install -r requirements.txt` from this folder.
 >
 > Repository: <https://github.com/mamuntheprogrammer/Kotha_bondhu>
 
@@ -44,9 +43,9 @@ Then open <http://127.0.0.1:8765> (the browser opens automatically). Use
 | Playback controls | Pause / stop | Play, pause, seek, stop, mute, replay, live progress |
 | Bangla cache | Fails if `manifest.json` is missing | Self-heals the manifest on startup |
 
-The default Kokoro/MMS path keeps the original quality: the studio reuses the
-original `awaaz.engines`, `awaaz.text`, `awaaz.audio` and `awaaz.models` layers.
-The optional Bangla voices and cloning live beside it, not inside the core.
+The default Kokoro/MMS path keeps the original quality: the studio now carries
+its own small `core/` package with the engines, text planner, audio helpers and
+model bookkeeping. The optional Bangla voices and cloning live beside it.
 
 ---
 
@@ -212,7 +211,14 @@ ai_version/
 ├── run.py            launcher
 ├── server.py         ThreadingHTTPServer, JSON + SSE routes, static files
 ├── studio.py         job queue, worker, events, downloads, export, cache repair
-├── paths.py          bundled-model discovery / AWAAZ_CACHE_DIR selection
+├── paths.py          bundled-model discovery / AWAZ_CACHE_DIR selection
+├── core/             local synthesis core (no external TTS package)
+│   ├── config.py     cache path and shared constants
+│   ├── engines/      Kokoro (en) + MMS-TTS (bn), registry, engine interface
+│   ├── text/         script detection → Bangla normalization → chunking
+│   ├── audio/        resampling, loudness, WAV/FLAC/MP3/OGG export
+│   ├── models/       download, verify, cache
+│   └── pipeline.py   request → ordered (language, text) jobs
 ├── bn_voices.py      bundled two-speaker Bangla ONNX engine + downloader
 ├── cloning.py        optional manager: venv, HF download, voices, TTSEngine
 ├── clone_worker.py   isolated IndicF5 subprocess (JSON-lines protocol)
@@ -221,16 +227,6 @@ ai_version/
     ├── index.html    layout + SVG icon sprite
     ├── styles.css    design system (dark/light, responsive, reduced-motion)
     └── app.js        state, SSE client, Web Audio player, canvas, UI
-```
-
-The engine core is imported from the parent package:
-
-```
-awaaz/
-├── engines/   Kokoro (English) + MMS-TTS (Bangla) behind one interface
-├── text/      script detection → Bangla normalization → sentence chunking
-├── audio/     resampling, loudness matching, WAV/FLAC/MP3/OGG export
-└── models/    download, verify, cache
 ```
 
 Flow for one press of **Speak**:
@@ -279,9 +275,10 @@ All endpoints are local-only (`127.0.0.1` by default).
   `vocab.json` but no `manifest.json`, which makes the original app report the
   Bangla model as missing. The studio derives and writes that manifest on
   startup, so no 500 MB re-download is needed.
-- **Bangla model setup.** If the ONNX export is genuinely absent, downloading it
-  still requires `pip install -e .[export]` and
-  `python -m awaaz.models.export_mms` (PyTorch is a build-time dependency only).
+- **Bangla model setup.** If the ONNX export is genuinely absent, copy a set of
+  `model.onnx`, `vocab.json` and `manifest.json` into `models/mms-ben-onnx/`.
+  Producing that export needs PyTorch on a separate machine; the studio itself
+  only reads the finished files.
 - **MP3/OGG/FLAC.** Availability depends on the local `libsndfile`; the server
   returns a readable error instead of a broken file.
 - **Licenses.** Kokoro-82M is Apache 2.0. MMS-TTS Bengali is CC-BY-NC 4.0

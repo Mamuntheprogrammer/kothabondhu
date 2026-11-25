@@ -40,7 +40,7 @@ configure_model_cache()
 from studio import SAMPLE_RATE, Studio, open_in_file_manager, repair_bangla_manifest  # noqa: E402
 import bn_voices  # noqa: E402
 from cloning import CloneRequest  # noqa: E402
-from awaaz.config import cache_dir  # noqa: E402
+from core.config import cache_dir  # noqa: E402
 
 
 # --------------------------------------------------------------------------- helpers
@@ -339,7 +339,7 @@ class Handler(BaseHTTPRequestHandler):
         time.sleep(0.05)
 
     def _export(self, job, fmt: str) -> None:
-        from awaaz.audio.export import ExportError
+        from core.audio.export import ExportError
 
         if job.status in {"queued", "running"}:
             return self._error("Wait for generation to finish before exporting.", 409)
@@ -478,7 +478,7 @@ class Handler(BaseHTTPRequestHandler):
         return self._json({"ok": True, "removed": removed})
 
     def _preview(self) -> None:
-        from awaaz.engines import ModelNotAvailable
+        from core.engines import ModelNotAvailable
 
         payload = self._body()
         voice = str(payload.get("voice") or "").strip()

@@ -8,8 +8,8 @@ Everything time-consuming happens here, on background threads:
   to any number of subscribers (the browser connects over SSE);
 * model downloads run on their own threads and publish progress events.
 
-The voices themselves come from the original :mod:`awaaz` package, so this
-rebuild is a new application layer, not a new TTS engine.
+The speech engines, DSP helpers and text planner live in the local :mod:`core`
+package, so this project runs without any external TTS package.
 """
 
 from __future__ import annotations
@@ -30,17 +30,16 @@ from typing import Iterator
 import numpy as np
 
 BASE_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = BASE_DIR.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 
-from awaaz import __version__ as CORE_VERSION  # noqa: E402
-from awaaz.audio import dsp  # noqa: E402
-from awaaz.audio import export as audio_export  # noqa: E402
-from awaaz.config import OUTPUT_SAMPLE_RATE, cache_dir  # noqa: E402
-from awaaz.engines import EmptyText, EngineError, ModelNotAvailable, registry  # noqa: E402
-from awaaz.models import manager  # noqa: E402
-from awaaz.pipeline import Request, plan  # noqa: E402
+from core import __version__ as CORE_VERSION  # noqa: E402
+from core.audio import dsp  # noqa: E402
+from core.audio import export as audio_export  # noqa: E402
+from core.config import OUTPUT_SAMPLE_RATE, cache_dir  # noqa: E402
+from core.engines import EmptyText, EngineError, ModelNotAvailable, registry  # noqa: E402
+from core.models import manager  # noqa: E402
+from core.pipeline import Request, plan  # noqa: E402
 import bn_voices  # noqa: E402
 from cloning import CloneManager  # noqa: E402
 

@@ -1,15 +1,34 @@
-# Kotha Bondhu runtime
+# Kotha Bondhu (কথাবন্ধু) — Python dependencies
 #
-# The studio is a new application layer on top of the original TTS package
-# (`../awaaz`), which provides the engines, text pipeline and model cache.
-# Installing the parent package is enough:
+# Self-contained web studio. The synthesis core lives in the local `core/`
+# package (config, DSP, export, engines, model manager and text planning), so no
+# separate TTS package has to be installed. The model files under models/ are
+# bundled, so a normal run needs no download.
 #
-#     pip install -e ..
+#     python3 -m venv .venv
+#     .venv/bin/pip install -r requirements.txt
+#     .venv/bin/python run.py
 #
-# If the engines are already installed, these are the only runtime pieces the
-# studio itself needs:
+# Default runtime: Kokoro (English), MMS (Bangla) and the bundled
+# two-speaker indic-tiny-bn engine all run on NumPy + ONNX Runtime. soundfile is
+# used for WAV/FLAC/MP3/OGG export and reference-audio handling; platformdirs is
+# used by core.config for the model cache path.
 numpy>=1.24
 onnxruntime>=1.17
 kokoro-onnx>=0.4.5
 soundfile>=0.12
 platformdirs>=3.0
+
+# Only used for Hugging Face downloads by repo id (the vendored
+# indic_tiny_tts/export/onnx_infer.py and the clone worker). The bundled models
+# and the bn_voices.py downloader use plain HTTP, so this is not needed for the
+# offline path, but it is small and keeps every lazy import covered.
+huggingface_hub>=0.24
+
+# Voice cloning is deliberately NOT installed here. Models -> Clone creates an
+# isolated venv at <cache>/cloning/venv and installs its own pinned stack there
+# (torch, torchaudio, transformers<4.50, librosa, soundfile, pydub, safetensors,
+# huggingface_hub, vocos, x_transformers, torchdiffeq, accelerate, ...).
+# See PIP_EXTRA in cloning.py for the authoritative list. The vendored
+# indic_tiny_tts PyTorch files also reference PyYAML and numba, but the studio
+# uses that package's ONNX path only, so neither is needed here.

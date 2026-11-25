@@ -20,8 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent
 BUNDLED_MODELS = BASE_DIR / "models"
 MODEL_KEYS = ("kokoro", "mms-ben-onnx", "indic-tiny-bn")
 
-# `awaaz.config.cache_dir()` reads AWAZ_CACHE_DIR. Its docstring spells the
-# variable with a double A, so we accept both and always set the real one.
+# `core.config.cache_dir()` reads AWAZ_CACHE_DIR on every call. Older builds
+# spelled the variable with a double A, so we accept both here.
 ENV_VAR = "AWAZ_CACHE_DIR"
 LEGACY_ENV_VAR = "AWAAZ_CACHE_DIR"
 
@@ -47,9 +47,9 @@ def bundled_models() -> Path | None:
 def configure_model_cache(explicit: str | os.PathLike[str] | None = None) -> Path | None:
     """Point the core at the right model folder and return it.
 
-    ``cache_dir()`` in :mod:`awaaz.config` reads ``AWAAZ_CACHE_DIR`` on every
-    call, so setting the variable here is enough — no core module needs to be
-    reloaded. Returns ``None`` when the platform default should be used.
+    ``cache_dir()`` in :mod:`core.config` reads ``AWAZ_CACHE_DIR`` on every
+    call, so setting the variable here is enough — no module needs reloading.
+    Returns ``None`` when the platform default should be used.
     """
     if explicit:
         path = Path(explicit).expanduser().resolve()

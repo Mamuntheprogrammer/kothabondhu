@@ -10,7 +10,7 @@ The implementation has three pieces:
 * :class:`CloneManager` — creates an isolated virtual environment, downloads the
   IndicF5 weights and vocoder with plain stdlib HTTP, and stores reference
   voices under ``<cache>/cloning/``;
-* :class:`CloneEngine` — a :class:`~awaaz.engines.base.TTSEngine` that talks to a
+* :class:`CloneEngine` — a :class:`~core.engines.base.TTSEngine` that talks to a
   long-lived worker subprocess over JSON lines;
 * ``clone_worker.py`` — the subprocess, which is the only place the heavy
   PyTorch stack is imported. A crash or OOM there cannot take down the studio.
@@ -43,10 +43,10 @@ import numpy as np
 import urllib.error
 import urllib.request
 
-from awaaz.audio import dsp
-from awaaz.config import cache_dir
-from awaaz.engines.base import EngineError, ModelNotAvailable, TTSEngine
-from awaaz.pipeline import Request
+from core.audio import dsp
+from core.config import cache_dir
+from core.engines.base import EngineError, ModelNotAvailable, TTSEngine
+from core.pipeline import Request
 
 BASE_DIR = Path(__file__).resolve().parent
 WORKER = BASE_DIR / "clone_worker.py"
