@@ -127,9 +127,10 @@ active folder.
 **Clone (optional)**
 - Self-service setup of IndicF5 in an isolated virtual environment
 - CPU or CUDA/GPU install profile, auto-detected from `nvidia-smi`
-- Gated model download with a token that stays in server memory only
+- Gated model download with a token saved locally once (owner-readable file)
 - Add Bengali reference voices (file or microphone), preview, select, delete
 - One cloned voice reads every segment; English may sound accented
+- Speed presets (Fast 8 / Balanced 16 / Best 32 diffusion steps) for CPU users
 - Periodic status pings and SSE logs — setup never blocks the UI
 
 **Export**
@@ -171,12 +172,17 @@ The engine is [`ai4bharat/IndicF5`](https://huggingface.co/ai4bharat/IndicF5)
 so a Hugging Face token is needed once for the ~1.45 GB model download. Use the
 Clone tab to:
 
-1. **Save a token** — pasted into the browser, held only in the Python server's
-   memory for that session. It is never written to a file or returned to the page.
+1. **Save a token** — pasted into the browser and stored once in
+   `<cache>/cloning/token` with owner-only permissions, or read from `HF_TOKEN` /
+   the standard Hugging Face token file. It is never returned to the page. Save
+   an empty token to clear it. It is only needed for the one-time gated download;
+   cloning and speaking work offline once the model is present.
 2. **Install the runtime** — creates `<cache>/cloning/venv` with a pinned,
    isolated dependency set (`numpy<=1.26.4`, `transformers<4.50`, …). Choose
    `CUDA / GPU` when installing on the GPU machine; the CPU profile is available
-   but very slow.
+   but very slow. Pick a **Cloning speed** preset here (step 2): Balanced (16
+   steps) is the default, Fast (8) is roughly 4× quicker on CPU, Best (32) sounds
+   most natural. The choice persists and takes effect on the next run.
 3. **Download IndicF5** — weights, vocabulary, the `f5_tts` modules and the
    Vocos vocoder, with resumable progress. Everything is stored under
    `<cache>/cloning/`.
@@ -258,7 +264,8 @@ Flow for one press of **Speak**:
 | `POST` | `/api/preview` | `{voice}` → short WAV preview |
 | `GET` | `/api/clone` | Clone environment, model, device and saved voices |
 | `GET` | `/api/clone/setup?profile=cpu\|cuda` | SSE: install isolated runtime |
-| `POST` | `/api/clone/token` | `{token}` → keep a token in server memory |
+| `POST` | `/api/clone/token` | `{token}` → save/clear the local token |
+| `POST` | `/api/clone/quality` | `{quality}` → fast / balanced / best |
 | `GET` | `/api/clone/download` | SSE: download/resume IndicF5 with progress |
 | `POST` | `/api/clone/voices` | `{name, text, audio, language}` → save a reference voice |
 | `GET` | `/api/clone/voices/{id}/audio` | Play the saved reference clip |
@@ -288,4 +295,5 @@ All endpoints are local-only (`127.0.0.1` by default).
 - **Privacy.** Text, audio, history and preferences stay on this machine.
   History lives in browser `localStorage`; audio lives in server memory for up
   to two hours (last 24 jobs) and can be cleared by restarting the server. A
-  cloning token exists only in server memory and disappears on restart.
+  cloning token, if saved, persists locally in `<cache>/cloning/token` (mode
+  `0600`) so you only paste it once; clear it with an empty Save token.

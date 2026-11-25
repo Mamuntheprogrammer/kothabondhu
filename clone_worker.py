@@ -130,6 +130,63 @@ class Worker:
         # Compiling adds a long warm-up without helping a single short sentence.
         torch.compile = lambda module, *args, **kwargs: module  # type: ignore[assignment]
 
+        # The upstream model.py calls load_model() without the ckpt_path that
+        # the bundled f5_tts helper requires. We already have the weights
+        # locally, so supply them here instead of editing downloaded files.
+        import f5_tts.infer.utils_infer as utils_infer
+
+        # Recent torchaudio defaults to TorchCodec for load(); soundfile is
+        # already installed and handles our small reference WAVs without it.
+        import torchaudio
+        import soundfile as sf
+
+        def load_with_soundfile(path, *args, **kwargs):
+            data, sample_rate = sf.read(str(path), dtype="float32", always_2d=True)
+            return torch.from_numpy(data.T).contiguous(), sample_rate
+
+        torchaudio.load = load_with_soundfile
+
+        # The weights were saved from a torch.compile'd model, so their keys
+        # carry an ``_orig_mod.`` prefix that the current model does not have.
+        import safetensors.torch as safetensors_torch
+
+        original_load_file = safetensors_torch.load_file
+
+        def load_file_compat(filename, device="cpu", **kwargs):
+            state = original_load_file(filename, device=device, **kwargs)
+            cleaned: dict[str, object] = {}
+            for key, value in state.items():
+                if key.startswith("vocoder."):
+                    # The vocoder is loaded separately from vocos-mel-24khz.
+                    continue
+                key = key.replace("ema_model.", "").replace("_orig_mod.", "")
+                cleaned[key] = value
+            return cleaned
+
+        safetensors_torch.load_file = load_file_compat
+
+        original_load_checkpoint = getattr(utils_infer, "load_checkpoint", None)
+        if original_load_checkpoint is not None:
+
+            def load_checkpoint_compat(model, ckpt_path, device, *args, **kwargs):
+                # safetensors expects a device string, not a torch.device.
+                if hasattr(device, "type"):
+                    device = str(device)
+                return original_load_checkpoint(model, ckpt_path, device, *args, **kwargs)
+
+            utils_infer.load_checkpoint = load_checkpoint_compat
+
+        original_load_model = getattr(utils_infer, "load_model", None)
+        if original_load_model is not None:
+            local_ckpt = str(model_dir / "model.safetensors")
+
+            def load_model_with_local_ckpt(model_cls, model_cfg, ckpt_path=None, *args, **kwargs):
+                return original_load_model(
+                    model_cls, model_cfg, ckpt_path or local_ckpt, *args, **kwargs
+                )
+
+            utils_infer.load_model = load_model_with_local_ckpt
+
         from transformers import AutoModel
 
         preferred = str(message.get("device") or "auto")
@@ -140,12 +197,32 @@ class Worker:
         else:
             self.device = "cpu"
 
+        torch.set_num_threads(max(1, min(8, os.cpu_count() or 4)))
+
+        # Fewer diffusion steps are the main CPU speedup: 32 -> 16 roughly
+        # halves inference time with only a small quality change.
+        nfe_steps = int(message.get("nfe_steps") or 0) or (16 if self.device == "cpu" else 32)
+        original_infer = getattr(utils_infer, "infer_process", None)
+        if original_infer is not None:
+
+            def infer_with_steps(*args, **kwargs):
+                kwargs["nfe_step"] = nfe_steps
+                return original_infer(*args, **kwargs)
+
+            utils_infer.infer_process = infer_with_steps
+        log(f"Using {nfe_steps} diffusion steps on {self.device}.", request_id)
+
         log(f"Loading weights on {self.device}…", request_id)
         self.model = AutoModel.from_pretrained(
             str(model_dir), trust_remote_code=True, local_files_only=True
         )
         self.model.to(self.device)
         self.model.eval()
+        # Upstream silence splitting can delete the entire utterance for short
+        # or quiet clips. Keep all generated samples and let our own DSP handle
+        # loudness instead.
+        if hasattr(self.model, "config") and hasattr(self.model.config, "remove_sil"):
+            self.model.config.remove_sil = False
         self.ready = True
         log(f"IndicF5 ready on {self.device}.", request_id)
         return {"sample_rate": SAMPLE_RATE, "device": self.device}
@@ -173,7 +250,10 @@ class Worker:
             audio = _mock_audio(text)
         else:
             log(f"Cloning {len(text)} characters…", request_id)
-            generated = self.model(text, ref_audio_path=str(reference), ref_text=ref_text)
+            import torch
+
+            with torch.inference_mode():
+                generated = self.model(text, ref_audio_path=str(reference), ref_text=ref_text)
             audio = np.asarray(generated, dtype=np.float32).reshape(-1)
             # Upstream returns int16 samples from pydub in some versions.
             if np.issubdtype(np.asarray(generated).dtype, np.integer):

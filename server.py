@@ -27,6 +27,15 @@ BASE_DIR = Path(__file__).resolve().parent
 WEB_DIR = BASE_DIR / "web"
 # Large enough for a 60-second 24 kHz reference clip sent as base64 JSON.
 MAX_BODY = 12 * 1024 * 1024
+# The standard library caps a request line at 64 KB and answers 414. This is a
+# local-only server, so allow more headroom for proxied or extension-generated
+# URLs and log them instead of silently failing.
+MAX_REQUEST_LINE = 1024 * 1024
+
+
+class BodyTooLarge(ValueError):
+    """The upload exceeded MAX_BODY."""
+
 
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
@@ -86,6 +95,35 @@ class Handler(BaseHTTPRequestHandler):
     def log_error(self, fmt: str, *args) -> None:
         sys.stderr.write("studio: %s\n" % (fmt % args))
 
+    def handle_one_request(self) -> None:
+        """Like the stdlib version, but with a larger request-line limit."""
+        try:
+            self.raw_requestline = self.rfile.readline(MAX_REQUEST_LINE + 1)
+            length = len(self.raw_requestline)
+            if length > MAX_REQUEST_LINE:
+                self.requestline = ""
+                self.request_version = ""
+                self.command = ""
+                self.send_error(HTTPStatus.REQUEST_URI_TOO_LONG)
+                return
+            if length > 65536:
+                preview = self.raw_requestline[:200].decode("iso-8859-1", "replace").strip()
+                self.log_error("long request line (%d bytes): %s", length, preview)
+            if not self.raw_requestline:
+                self.close_connection = True
+                return
+            if not self.parse_request():
+                return
+            method_name = "do_" + self.command
+            if not hasattr(self, method_name):
+                self.send_error(HTTPStatus.NOT_IMPLEMENTED, "Unsupported method (%r)" % self.command)
+                return
+            getattr(self, method_name)()
+            self.wfile.flush()
+        except TimeoutError as exc:
+            self.log_error("Request timed out: %r", exc)
+            self.close_connection = True
+
     def _send(
         self,
         status: int,
@@ -123,8 +161,19 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get("Content-Length") or 0)
         except ValueError:
             return {}
-        if length <= 0 or length > MAX_BODY:
+        if length <= 0:
             return {}
+        if length > MAX_BODY:
+            # Drain the socket before replying, otherwise the unread upload is
+            # parsed as the next request on this keep-alive connection and the
+            # browser reports a network error instead of our JSON message.
+            remaining = length
+            while remaining > 0:
+                block = self.rfile.read(min(65536, remaining))
+                if not block:
+                    break
+                remaining -= len(block)
+            raise BodyTooLarge(f"Upload is too large (limit {MAX_BODY // (1024 * 1024)} MB).")
         raw = self.rfile.read(length)
         try:
             payload = json.loads(raw.decode("utf-8"))
@@ -194,8 +243,10 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/clone":
                 return self._json(self.studio.clone.status())
             if path == "/api/clone/setup":
-                profile = (parse_qs(parsed.query).get("profile") or ["cpu"])[0]
-                return self._clone_stream(self.studio.clone.setup_stream(profile))
+                query = parse_qs(parsed.query)
+                profile = (query.get("profile") or ["cpu"])[0]
+                force = (query.get("force") or ["0"])[0] in {"1", "true", "yes"}
+                return self._clone_stream(self.studio.clone.setup_stream(profile, force=force))
             if path == "/api/clone/download":
                 return self._clone_stream(self.studio.clone.download_stream())
             if path.startswith("/api/clone/voices/") and path.endswith("/audio"):
@@ -237,7 +288,9 @@ class Handler(BaseHTTPRequestHandler):
             200,
             body,
             mime or "application/octet-stream",
-            {"Cache-Control": "no-cache"},
+            # Always serve the current files on disk; a stale cached app.js can
+            # hide newly added controls after an in-place update.
+            {"Cache-Control": "no-store"},
         )
 
     def _download_stream(self, key: str) -> None:
@@ -372,6 +425,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._preview()
             if path == "/api/clone/token":
                 return self._clone_token()
+            if path == "/api/clone/quality":
+                return self._clone_quality()
             if path == "/api/clone/voices":
                 return self._clone_add_voice()
             if path.startswith("/api/clone/voices/") and path.endswith("/delete"):
@@ -388,6 +443,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._error("Not found", 404)
         except (BrokenPipeError, ConnectionResetError):
             pass
+        except BodyTooLarge as exc:
+            self._error(str(exc), 413)
         except Exception as exc:  # noqa: BLE001
             if self.verbose:
                 traceback.print_exc()
@@ -448,12 +505,34 @@ class Handler(BaseHTTPRequestHandler):
         token = str(payload.get("token") or "").strip()
         if len(token) > 512:
             return self._error("That token is too long.", 400)
-        self.studio.clone.token = token
+        self.studio.clone.save_token(token)
         return self._json(
             {
                 "ok": True,
                 "saved": bool(token),
-                "message": "Token saved for this server session only." if token else "Token cleared.",
+                "message": (
+                    "Token saved on this computer; it will be restored next time."
+                    if token
+                    else "Token cleared."
+                ),
+            }
+        )
+
+    def _clone_quality(self) -> None:
+        payload = self._body()
+        value = str(payload.get("quality") or "").strip()
+        try:
+            saved = self.studio.clone.set_quality(value)
+        except ValueError as exc:
+            return self._error(str(exc), 400)
+        self.studio.clone.reload_engine()
+        steps = self.studio.clone.QUALITY_STEPS[saved]
+        return self._json(
+            {
+                "ok": True,
+                "quality": saved,
+                "steps": steps,
+                "message": f"Using {steps} diffusion steps. The worker reloads on the next run.",
             }
         )
 

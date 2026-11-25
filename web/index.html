@@ -343,23 +343,36 @@
             <input type="password" id="clone-token" placeholder="hf_…" autocomplete="off" spellcheck="false" aria-label="Hugging Face token" />
             <button class="btn btn-quiet" id="clone-token-save">Save token</button>
           </div>
-          <p class="field-note">Stored in server memory only — never written to disk or shown again.</p>
+          <p class="field-note">Saved locally (owner-readable only) so you only paste it once. Leave blank and press Save token to clear it.</p>
         </section>
 
         <section class="clone-step">
-          <header class="clone-step-head"><span class="step-num">2</span><div><h3>Install the runtime</h3><p>An isolated virtual environment keeps PyTorch away from the main studio.</p></div></header>
+          <header class="clone-step-head"><span class="step-num">2</span><div><h3>Cloning speed</h3><p>Applies when you speak with a cloned voice. On CPU, Fast is roughly 4× quicker than Best.</p></div></header>
+          <div class="clone-row">
+            <select id="clone-quality" aria-label="Cloning speed">
+              <option value="fast">Fast · 8 steps (lowest quality)</option>
+              <option value="balanced">Balanced · 16 steps</option>
+              <option value="best">Best · 32 steps (slowest)</option>
+            </select>
+            <span class="clone-copy" id="clone-speed-copy">Balanced is the default.</span>
+          </div>
+        </section>
+
+        <section class="clone-step">
+          <header class="clone-step-head"><span class="step-num">3</span><div><h3>Install the runtime</h3><p>An isolated virtual environment keeps PyTorch away from the main studio.</p></div></header>
           <div class="clone-row">
             <select id="clone-profile" aria-label="Install profile">
               <option value="cpu">CPU</option>
               <option value="cuda">CUDA / GPU</option>
             </select>
             <button class="btn btn-ghost" id="clone-setup">Install environment</button>
+            <button class="btn btn-quiet" id="clone-setup-retry" hidden>Reinstall</button>
           </div>
           <p class="field-note">About 2–3 GB of packages. The GPU profile uses PyTorch CUDA 12.1 wheels.</p>
         </section>
 
         <section class="clone-step">
-          <header class="clone-step-head"><span class="step-num">3</span><div><h3>Download IndicF5</h3><p>DiT weights, vocabulary and the Vocos vocoder — roughly 1.45 GB, resumed on retry.</p></div></header>
+          <header class="clone-step-head"><span class="step-num">4</span><div><h3>Download IndicF5</h3><p>DiT weights, vocabulary and the Vocos vocoder — roughly 1.45 GB, resumed on retry.</p></div></header>
           <div class="clone-row">
             <button class="btn btn-ghost" id="clone-download">Download model</button>
             <span class="clone-copy" id="clone-model-copy">Checking local files…</span>
@@ -373,7 +386,7 @@
         <pre class="clone-log" id="clone-log" hidden aria-live="polite"></pre>
 
         <section class="clone-step">
-          <header class="clone-step-head"><span class="step-num">4</span><div><h3>Add a reference voice</h3><p>A clear 3–60 second clip and its exact transcript. Keep it short and noise-free.</p></div></header>
+          <header class="clone-step-head"><span class="step-num">5</span><div><h3>Add a reference voice</h3><p>A clear 3–60 second clip and its exact transcript. Keep it short and noise-free.</p></div></header>
           <label class="clone-label">Voice name<input type="text" id="clone-voice-name" maxlength="60" placeholder="e.g.voice" autocomplete="off" /></label>
           <label class="clone-label">What the clip says<textarea id="clone-voice-text" rows="3" maxlength="600" placeholder="Type the words spoken in the reference, exactly."></textarea></label>
           <div class="clone-row">
@@ -387,7 +400,7 @@
         </section>
 
         <section class="clone-step">
-          <header class="clone-step-head"><span class="step-num">5</span><div><h3>Saved voices</h3><p>Choose one from the voice menu to use it for every segment.</p></div></header>
+          <header class="clone-step-head"><span class="step-num">6</span><div><h3>Saved voices</h3><p>Choose one from the voice menu to use it for every segment.</p></div></header>
           <div class="clone-voice-list" id="clone-voice-list"></div>
         </section>
       </div>

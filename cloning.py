@@ -151,6 +151,30 @@ def _hf_headers(token: str = "") -> dict[str, str]:
     return headers
 
 
+def _hf_access_help(token: str, code: int) -> str:
+    """Turn a Hugging Face 401/403 into an actionable message."""
+    if code not in (401, 403):
+        return f"HTTP {code}"
+    try:
+        request = urllib.request.Request(
+            "https://huggingface.co/api/whoami-v2", headers=_hf_headers(token)
+        )
+        with urllib.request.urlopen(request, timeout=15) as response:
+            who = json.loads(response.read().decode("utf-8"))
+        name = str(who.get("name") or who.get("user") or "your account")
+        return (
+            f"Hugging Face refused access (HTTP {code}) for {name}. "
+            f"Open https://huggingface.co/{REPO_ID}, accept the access terms, "
+            "then save the token again and retry the download."
+        )
+    except Exception:
+        return (
+            f"Hugging Face rejected the token (HTTP {code}). Save a fresh read "
+            "token from https://huggingface.co/settings/tokens. If the token is "
+            f"valid, accept the access terms at https://huggingface.co/{REPO_ID}."
+        )
+
+
 def _read_wav_float(path: Path) -> np.ndarray:
     """Read a WAV as mono float32, using libsndfile when available."""
     try:
@@ -222,12 +246,85 @@ class CloneManager:
                 path.mkdir(parents=True, exist_ok=True)
             except OSError:
                 pass
-        self.token = ""
+        self.token = self._load_token()
+        self.quality = self._load_quality()
         self._tasks: dict[str, CloneTask] = {}
         self._tasks_lock = threading.Lock()
         self._device_cache: dict | None = None
         self._engine: CloneEngine | None = None
         self._engine_lock = threading.Lock()
+
+    # ----------------------------------------------------------------- quality
+
+    QUALITY_STEPS = {"fast": 8, "balanced": 16, "best": 32}
+
+    def _load_quality(self) -> str:
+        try:
+            saved = json.loads((self.root / "settings.json").read_text(encoding="utf-8"))
+            value = str(saved.get("quality") or "").lower()
+        except (OSError, ValueError):
+            value = ""
+        return value if value in self.QUALITY_STEPS else "balanced"
+
+    def set_quality(self, value: str) -> str:
+        value = str(value or "").lower()
+        if value not in self.QUALITY_STEPS:
+            raise ValueError("Choose fast, balanced or best.")
+        self.quality = value
+        path = self.root / "settings.json"
+        try:
+            path.write_text(
+                json.dumps({"quality": value}, indent=2), encoding="utf-8"
+            )
+        except OSError:
+            pass
+        return value
+
+    def reload_engine(self) -> None:
+        """Drop the loaded worker so a quality change takes effect immediately."""
+        with self._engine_lock:
+            engine, self._engine = self._engine, None
+        if engine is not None:
+            engine.cancel()
+
+    # ------------------------------------------------------------------- token
+
+    def _load_token(self) -> str:
+        """Restore a token from disk or the environment, so a restart is enough."""
+        hf_home = Path(os.environ.get("HF_HOME") or (Path.home() / ".cache" / "huggingface"))
+        candidates = (
+            self.root / "token",
+            hf_home / "token",
+            hf_home / ".token",
+        )
+        for path in candidates:
+            try:
+                value = path.read_text(encoding="utf-8").strip()
+            except OSError:
+                continue
+            if value:
+                return value[:512]
+        for name in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"):
+            value = os.environ.get(name, "").strip()
+            if value:
+                return value[:512]
+        return ""
+
+    def save_token(self, token: str) -> str:
+        """Remember the token locally (owner-readable only) for future runs."""
+        token = str(token or "").strip()[:512]
+        self.token = token
+        path = self.root / "token"
+        if token:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(token + "\n", encoding="utf-8")
+            try:
+                path.chmod(0o600)
+            except OSError:
+                pass
+        else:
+            path.unlink(missing_ok=True)
+        return token
 
     # --------------------------------------------------------------- environment
 
@@ -385,6 +482,9 @@ class CloneManager:
             "available": True,
             "mock": MOCK,
             "repo": REPO_ID,
+            "token_saved": bool(self.token),
+            "quality": self.quality,
+            "quality_steps": self.QUALITY_STEPS[self.quality],
             "environment": environment,
             "model": model,
             "device": device,
@@ -423,16 +523,20 @@ class CloneManager:
 
     # --------------------------------------------------------------------- setup
 
-    def setup_stream(self, profile: str = "cpu") -> Iterator[dict]:
+    def setup_stream(self, profile: str = "cpu", force: bool = False) -> Iterator[dict]:
         profile = "cuda" if str(profile).lower() in {"cuda", "gpu"} else "cpu"
         if MOCK:
             yield {"type": "start", "profile": "mock", "title": "Mock clone environment"}
             yield {"type": "log", "stage": "setup", "line": "Mock mode — environment already available."}
             yield {"type": "done", "ready": True, "message": "Mock clone worker is ready."}
             return
-        if self.environment_status()["ready"]:
+        if self.environment_status()["ready"] and not force:
             yield {"type": "done", "ready": True, "message": "Clone environment is already installed."}
             return
+        if force:
+            # Clear the marker so a failed reinstall cannot leave a stale
+            # "ready" state, and so pip re-checks every pinned package.
+            (self.venv_dir / ".ready.json").unlink(missing_ok=True)
         task, fresh = self._task(f"setup:{profile}")
         if fresh:
             threading.Thread(
@@ -699,7 +803,9 @@ class CloneManager:
             if exc.code == 416 and part.is_file():  # range no longer valid
                 part.unlink(missing_ok=True)
                 return CloneManager._download_one(name, size, repo, token, target, part, total, done, task)
-            raise RuntimeError(f"Could not download {name}: HTTP {exc.code}") from exc
+            raise RuntimeError(
+                f"Could not download {name}: {_hf_access_help(token, exc.code)}"
+            ) from exc
         mode = "ab"
         with response:
             if resume and response.status != 206:
@@ -923,6 +1029,7 @@ class CloneEngine(TTSEngine):
                     "model_dir": str(self.manager.model_dir),
                     "vocoder_dir": str(self.manager.vocoder_dir),
                     "device": self.manager.device_info()["recommended"],
+                    "nfe_steps": self.manager.QUALITY_STEPS[self.manager.quality],
                     "mock": MOCK,
                 },
                 timeout=900,

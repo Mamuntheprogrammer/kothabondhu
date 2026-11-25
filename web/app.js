@@ -870,16 +870,21 @@
     els.cloneChips.replaceChildren(
       cloneChip("Runtime", Boolean(env.ready), env.ready ? (env.mock ? "mock" : env.profile || "ready") : "not installed"),
       cloneChip("Model", Boolean(model.ready), model.ready ? (model.mock ? "mock" : fmtBytes(model.cached_bytes)) : "not downloaded"),
-      cloneChip("Device", Boolean(device.cuda || clone.mock), device.name || "unknown"),
+      cloneChip("Device", Boolean(env.ready || clone.mock), device.cuda ? device.name : "CPU only · slower"),
       cloneChip("Voices", voices.length > 0, `${voices.length} saved`)
     );
 
     if (!els.cloneProfile.dataset.touched) {
       els.cloneProfile.value = device.recommended === "cuda" ? "cuda" : "cpu";
     }
-    els.cloneToken.placeholder = state.cloneTokenSaved ? "Token saved (memory only)" : "hf_…";
+    els.cloneToken.placeholder = state.cloneTokenSaved ? "Token saved" : "hf_…";
+    const quality = clone.quality || "balanced";
+    els.cloneQuality.value = quality;
+    els.cloneSpeedCopy.textContent = `${quality} · ${clone.quality_steps || 16} steps`;
     els.cloneSetup.textContent = env.ready ? "Environment ready" : "Install environment";
     els.cloneSetup.disabled = Boolean(env.ready || state.cloneBusy);
+    els.cloneSetupRetry.hidden = !env.ready;
+    els.cloneSetupRetry.disabled = Boolean(state.cloneBusy);
     els.cloneDownload.textContent = model.ready ? "Model ready" : "Download model";
     els.cloneDownload.disabled = Boolean(model.ready || state.cloneBusy);
     const missing = (model.missing || []).length;
@@ -934,6 +939,7 @@
     }
     state.cloneBusy = kind;
     els.cloneSetup.disabled = true;
+    els.cloneSetupRetry.disabled = true;
     els.cloneDownload.disabled = true;
     els.cloneProgress.hidden = false;
     els.cloneProgressFill.style.width = "0%";
@@ -953,7 +959,7 @@
         /* ignore */
       }
       state.cloneBusy = "";
-      tracker.update(ok ? "Clone setup ready" : "Clone setup failed", message || "", ok ? "success" : "error");
+      tracker.update(ok ? `${title} ready` : `${title} failed`, message || "", ok ? "success" : "error");
       tracker.progress(ok ? 100 : 0);
       setTimeout(() => tracker.close(), ok ? 3200 : 9000);
       refreshStatus(false).then(renderClonePanel);
@@ -1124,6 +1130,10 @@
       toast("Almost there", "Add a voice name and the exact transcript.", "info");
       return;
     }
+    if (state.cloneAudio.size > 8 * 1024 * 1024) {
+      toast("Clip too large", "Use a clip under 8 MB (about 60 seconds of mono audio).", "error", { timeout: 6000 });
+      return;
+    }
     const button = els.cloneAdd;
     button.disabled = true;
     button.classList.add("is-busy");
@@ -1180,6 +1190,7 @@
       state.models = Array.isArray(data.models) ? data.models : [];
       state.voices = Array.isArray(data.voices) ? data.voices : [];
       state.clone = data.clone || state.clone;
+      state.cloneTokenSaved = Boolean(state.clone && state.clone.token_saved);
       const savedClone = ((state.clone && state.clone.voices) || []).find(
         (voice) => voice.id === state.cloneVoice
       );
@@ -2373,8 +2384,25 @@
     els.cloneProfile.addEventListener("change", () => {
       els.cloneProfile.dataset.touched = "1";
     });
+    els.cloneQuality.addEventListener("change", async () => {
+      try {
+        await api("/api/clone/quality", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quality: els.cloneQuality.value }),
+        });
+        const steps = { fast: 8, balanced: 16, best: 32 }[els.cloneQuality.value];
+        els.cloneSpeedCopy.textContent = `${els.cloneQuality.value} · ${steps} steps`;
+        toast("Cloning speed", "Saved. The worker reloads on the next run.", "success", { timeout: 3000 });
+      } catch (error) {
+        toast("Could not save speed", error.message || String(error), "error");
+      }
+    });
     els.cloneSetup.addEventListener("click", () =>
       startCloneStream("setup", `/api/clone/setup?profile=${encodeURIComponent(els.cloneProfile.value)}`, "Installing clone runtime")
+    );
+    els.cloneSetupRetry.addEventListener("click", () =>
+      startCloneStream("setup", `/api/clone/setup?profile=${encodeURIComponent(els.cloneProfile.value)}&force=1`, "Reinstalling clone runtime")
     );
     els.cloneDownload.addEventListener("click", () =>
       startCloneStream("download", "/api/clone/download", "Downloading IndicF5")
@@ -2507,7 +2535,10 @@
       cloneToken: $("#clone-token"),
       cloneTokenSave: $("#clone-token-save"),
       cloneProfile: $("#clone-profile"),
+      cloneQuality: $("#clone-quality"),
+      cloneSpeedCopy: $("#clone-speed-copy"),
       cloneSetup: $("#clone-setup"),
+      cloneSetupRetry: $("#clone-setup-retry"),
       cloneDownload: $("#clone-download"),
       cloneModelCopy: $("#clone-model-copy"),
       cloneProgress: $("#clone-progress"),
