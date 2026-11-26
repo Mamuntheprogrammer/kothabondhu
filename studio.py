@@ -401,9 +401,13 @@ class Studio:
                 return
 
             clone_voice = getattr(request, "clone_voice", None)
-            if clone_voice:
-                # A selected cloned voice applies to every script segment. It
-                # is tuned for Bengali; English may sound accented.
+            clone_here = clone_voice and not (
+                getattr(request, "clone_bn_only", True) and language != "bn"
+            )
+            if clone_here:
+                # IndicF5 is Bengali-only. Keep the cloned timbre for Bengali
+                # chunks; English chunks use the proper English engine so they
+                # are pronounced correctly instead of as romanized Bengali.
                 engine = self.clone.engine
                 selected_voice = clone_voice
             elif language == "bn" and request.voice_bn in bn_voices.VOICES:

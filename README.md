@@ -129,7 +129,7 @@ active folder.
 - CPU or CUDA/GPU install profile, auto-detected from `nvidia-smi`
 - Gated model download with a token saved locally once (owner-readable file)
 - Add Bengali reference voices (file or microphone), preview, select, delete
-- One cloned voice reads every segment; English may sound accented
+- By default a clone reads only Bengali segments; English uses the normal voice
 - Speed presets (Fast 8 / Balanced 16 / Best 32 diffusion steps) for CPU users
 - Periodic status pings and SSE logs — setup never blocks the UI
 
@@ -189,9 +189,12 @@ Clone tab to:
 4. **Add a reference voice** — a clear **3–60 s** clip (WAV/FLAC/OGG or browser
    recording), trimmed and peak-normalized to mono 24 kHz, plus the **exact
    transcript**. Confirm you have permission to use that voice.
-5. **Pick it from the voice menu** — a cloned voice overrides the voice for all
-   segments. It is Bengali-tuned, so English text in a mixed script will be
-   understandable but accented.
+5. **Pick it from the voice menu** — a cloned voice is used for Bengali segments.
+   IndicF5 is Bengali-only, so **"Use the cloned voice for Bengali only"** is on by
+   default: English chunks go to the normal Kokoro voice and are pronounced
+   correctly. Turn it off if you want the clone to read English too (it will sound
+   accented). A bilingual reference recording does not fix this — the language
+   limit is in the model's vocabulary, not in your clip.
 
 Inference runs in a separate `clone_worker.py` subprocess using JSON lines over
 stdin/stdout. A crash or out-of-memory failure there cannot take down the
@@ -254,7 +257,7 @@ Flow for one press of **Speak**:
 | Method | Path | Purpose |
 |---|---|---|
 | `GET` | `/api/status` | Models, voices, clone status, cache path, recent jobs |
-| `POST` | `/api/speak` | `{text, language, voice, voice_bn, clone_voice, speed, loudness, steady_bn}` → job id |
+| `POST` | `/api/speak` | `{text, language, voice, voice_bn, clone_voice, clone_bn_only, speed, loudness, steady_bn}` → job id |
 | `GET` | `/api/jobs/{id}/events` | SSE stream (`plan`, `stage`, `chunk`, `done`, …) |
 | `GET` | `/api/jobs/{id}` | Job snapshot with chunk metadata |
 | `GET` | `/api/jobs/{id}/chunks/{n}` | One 24 kHz WAV chunk |

@@ -474,6 +474,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._error("Unknown Bangla voice.", 400)
         steady_bn = bool(payload.get("steady_bn", True))
         clone_voice = str(payload.get("clone_voice") or "").strip() or None
+        clone_bn_only = bool(payload.get("clone_bn_only", True))
 
         clone = self.studio.clone
         if clone_voice:
@@ -495,6 +496,7 @@ class Handler(BaseHTTPRequestHandler):
             voice_bn=voice_bn,
             loudness_match=bool(payload.get("loudness", True)),
             clone_voice=clone_voice,
+            clone_bn_only=clone_bn_only,
             steady_bn=steady_bn,
         )
         job = self.studio.submit(request)

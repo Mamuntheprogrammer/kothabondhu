@@ -16,6 +16,9 @@ class Request:
     speed: float = 1.0
     voice_en: str | None = None
     voice_bn: str | None = None
+    #: With a cloned voice selected, keep it for Bengali only and let the
+    #: normal English engine read English chunks accurately.
+    clone_bn_only: bool = True
     loudness_match: bool = True
 
     def voice_for(self, language: str) -> str | None:

@@ -37,6 +37,7 @@
     downloads: {},
     clone: null,
     cloneVoice: null,
+    cloneBnOnly: true,
     cloneTokenSaved: false,
     cloneBusy: "",
     cloneAudio: null,
@@ -242,6 +243,7 @@
       if (typeof prefs.steadyBn === "boolean") state.steadyBn = prefs.steadyBn;
       if (typeof prefs.autoplay === "boolean") state.autoplay = prefs.autoplay;
       if (typeof prefs.cloneVoice === "string") state.cloneVoice = prefs.cloneVoice;
+      if (typeof prefs.cloneBnOnly === "boolean") state.cloneBnOnly = prefs.cloneBnOnly;
     } catch {
       /* ignore */
     }
@@ -260,6 +262,7 @@
           steadyBn: state.steadyBn,
           autoplay: state.autoplay,
           cloneVoice: state.cloneVoice,
+          cloneBnOnly: state.cloneBnOnly,
         })
       );
     } catch {
@@ -361,6 +364,7 @@
     if (entry.voice) state.voice = entry.voice;
     state.voiceBn = typeof entry.voice_bn === "string" ? entry.voice_bn || null : null;
     state.cloneVoice = typeof entry.clone_voice === "string" ? entry.clone_voice : null;
+    state.cloneBnOnly = entry.clone_bn_only !== false;
     if (Number.isFinite(entry.speed)) state.speed = clamp(entry.speed, 0.5, 2);
     if (typeof entry.steady_bn === "boolean") state.steadyBn = entry.steady_bn;
     applyPrefsToUI();
@@ -1354,6 +1358,7 @@
           voice: state.voice,
           voice_bn: state.voiceBn,
           clone_voice: state.cloneVoice || null,
+          clone_bn_only: state.cloneBnOnly,
           speed: state.speed,
           loudness: state.loudness,
           steady_bn: state.steadyBn,
@@ -1496,6 +1501,7 @@
           voice: state.cloneVoice || state.voice,
           voice_bn: state.cloneVoice ? null : state.voiceBn,
           clone_voice: state.cloneVoice,
+          clone_bn_only: state.cloneBnOnly,
           speed: state.speed,
           steady_bn: state.steadyBn,
           at: Date.now(),
@@ -2056,6 +2062,7 @@
     els.speed.value = String(state.speed);
     els.loudness.checked = state.loudness;
     els.steadyBn.checked = state.steadyBn;
+    els.cloneBnOnly.checked = state.cloneBnOnly;
     els.autoplay.checked = state.autoplay;
     updateSpeedVisual();
     updateVoiceTrigger();
@@ -2398,6 +2405,18 @@
         toast("Could not save speed", error.message || String(error), "error");
       }
     });
+    els.cloneBnOnly.addEventListener("change", () => {
+      state.cloneBnOnly = els.cloneBnOnly.checked;
+      savePrefs();
+      toast(
+        "Cloned voice",
+        state.cloneBnOnly
+          ? "Bengali uses your clone; English uses the normal voice."
+          : "Your clone will read both languages (English will sound accented).",
+        "success",
+        { timeout: 3500 }
+      );
+    });
     els.cloneSetup.addEventListener("click", () =>
       startCloneStream("setup", `/api/clone/setup?profile=${encodeURIComponent(els.cloneProfile.value)}`, "Installing clone runtime")
     );
@@ -2537,6 +2556,7 @@
       cloneProfile: $("#clone-profile"),
       cloneQuality: $("#clone-quality"),
       cloneSpeedCopy: $("#clone-speed-copy"),
+      cloneBnOnly: $("#clone-bn-only"),
       cloneSetup: $("#clone-setup"),
       cloneSetupRetry: $("#clone-setup-retry"),
       cloneDownload: $("#clone-download"),
